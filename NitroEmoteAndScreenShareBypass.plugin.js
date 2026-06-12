@@ -47,32 +47,34 @@ module.exports = (() => {
 					return config.info.version;
 				}
 				load() {
-					BdApi.showConfirmationModal(
+					const showConfirmationModal = BdApi.UI?.showConfirmationModal || BdApi.showConfirmationModal;
+					if (!showConfirmationModal) return;
+					showConfirmationModal(
 						"Library Missing",
 						`The library plugin needed for ${config.info.name} is missing. Please click Download Now to install it.`,
 						{
 							confirmText: "Download Now",
 							cancelText: "Cancel",
-							onConfirm: () => {
-								require("request").get(
-									"https://rauenzi.github.io/BDPluginLibrary/release/0PluginLibrary.plugin.js",
-									async (error, response, body) => {
-										if (error)
-											return require("electron").shell.openExternal(
-												"https://betterdiscord.net/ghdl?url=https://raw.githubusercontent.com/rauenzi/BDPluginLibrary/master/release/0PluginLibrary.plugin.js"
-											);
-										await new Promise((r) =>
-											require("fs").writeFile(
-												require("path").join(
-													BdApi.Plugins.folder,
-													"0PluginLibrary.plugin.js"
-												),
-												body,
-												r
-											)
-										);
-									}
-								);
+							onConfirm: async () => {
+								try {
+									const res = await fetch("https://raw.githubusercontent.com/rauenzi/BDPluginLibrary/master/release/0PluginLibrary.plugin.js");
+									if (!res.ok) throw new Error("Failed to fetch");
+									const body = await res.text();
+									await new Promise((r) =>
+										require("fs").writeFile(
+											require("path").join(
+												BdApi.Plugins.folder,
+												"0PluginLibrary.plugin.js"
+											),
+											body,
+											r
+										)
+									);
+								} catch (error) {
+									require("electron").shell.openExternal(
+										"https://betterdiscord.net/ghdl?url=https://raw.githubusercontent.com/rauenzi/BDPluginLibrary/master/release/0PluginLibrary.plugin.js"
+									);
+								}
 							},
 						}
 					);
